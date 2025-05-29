@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Command Orders</title>
+  <meta name="viewport" content="width=1200, user-scalable=yes" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      overflow: auto;
+      width: 1200px;
+    }
+
+    .container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .full-image {
+      display: block;
+      width: 1200px;
+      height: auto;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    .home-btn {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 50;
+      background-color: white;
+      padding: 6px;
+      border-radius: 6px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+      display: inline-block;
+    }
+
+    .home-btn img {
+      width: 80px;
+      height: 80px;
+    }
+
+    .toggle-draw-btn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 50;
+      background-color: white;
+      padding: 6px;
+      border-radius: 6px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+      display: inline-block;
+    }
+
+    .toggle-draw-btn img {
+      width: 80px;
+      height: 80px;
+    }
+
+    .toggle-draw-btn.disabled img {
+      filter: grayscale(100%) brightness(70%) contrast(150%) saturate(0%) sepia(100%) hue-rotate(0deg);
+      opacity: 0.4;
+    }
+
+    .reset-btn {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      z-index: 50;
+      padding: 0.5em 1em;
+      font-size: 24px;
+      color: red;
+      background-color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <!-- Bouton accueil -->
+  <a href="index.html" class="home-btn">
+    <img src="boutons/house.png" alt="Accueil" />
+  </a>
+
+  <div class="container" id="drawContainer">
+    <img src="icons/commands.png" alt="Command Orders" class="full-image" />
+    <img src="icons/battletactics.png" alt="Battle Tactics" class="full-image" />
+    <img src="icons/season-rule.png" alt="Season Rule" class="full-image" />
+    <canvas id="drawCanvas"></canvas>
+  </div>
+
+  <!-- Bouton dessin -->
+  <button class="toggle-draw-btn disabled" onclick="toggleDrawingMode()">
+    <img src="boutons/draw.png" alt="Dessin" />
+  </button>
+
+  <!-- Bouton reset -->
+  <button class="reset-btn" onclick="resetCanvas()">Reset</button>
+
+  <script>
+    const canvas = document.getElementById("drawCanvas");
+    const container = document.getElementById("drawContainer");
+    const ctx = canvas.getContext("2d");
+    let drawing = false;
+    let drawingEnabled = false;
+
+    function resizeCanvas() {
+      canvas.width = container.scrollWidth;
+      canvas.height = container.scrollHeight;
+      canvas.style.width = container.scrollWidth + "px";
+      canvas.style.height = container.scrollHeight + "px";
+      loadDrawing();
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("load", resizeCanvas);
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height),
+      };
+    }
+
+    function startDraw(e) {
+      if (!drawingEnabled || (e.touches && e.touches.length > 1)) return;
+      drawing = true;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      e.preventDefault();
+    }
+
+    function draw(e) {
+      if (!drawingEnabled || !drawing) return;
+      const pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      ctx.stroke();
+      e.preventDefault();
+    }
+
+    function stopDraw(e) {
+      if (!drawingEnabled || !drawing) return;
+      drawing = false;
+      ctx.closePath();
+      saveDrawing();
+      e.preventDefault();
+    }
+
+    canvas.addEventListener("mousedown", startDraw);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", stopDraw);
+    canvas.addEventListener("mouseout", stopDraw);
+
+    canvas.addEventListener("touchstart", startDraw, { passive: false });
+    canvas.addEventListener("touchmove", draw, { passive: false });
+    canvas.addEventListener("touchend", stopDraw, { passive: false });
+
+    function toggleDrawingMode() {
+      drawingEnabled = !drawingEnabled;
+      const btn = document.querySelector(".toggle-draw-btn");
+      btn.classList.toggle("disabled", !drawingEnabled);
+    }
+
+    function saveDrawing() {
+      try {
+        localStorage.setItem("canvasData", canvas.toDataURL());
+      } catch (e) {
+        console.warn("\u00c9chec de la sauvegarde", e);
+      }
+    }
+
+    function loadDrawing() {
+      const dataURL = localStorage.getItem("canvasData");
+      if (dataURL) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0);
+        img.src = dataURL;
+      }
+    }
+
+    function resetCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      localStorage.removeItem("canvasData");
+    }
+  </script>
+</body>
+</html>

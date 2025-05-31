@@ -352,7 +352,11 @@ function toggleDropdown(id) {
 
 function updateTopCard(slotId, imgPath) {
   const slot = document.getElementById(slotId);
-  slot.innerHTML = imgPath ? `<img src="${imgPath}" alt="">` : '';
+  if (slotId === 'slot-spell-lore') {
+    slot.innerHTML = imgPath ? `<img src="${imgPath}" alt="Spell Lore" onclick="openPopup('spell-lore')" />` : '';
+  } else {
+    slot.innerHTML = imgPath ? `<img src="${imgPath}" alt="">` : '';
+  }
 }
 
 function toggleDrag() {

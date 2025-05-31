@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem(key) === "1") {
       input.checked = true;
       currentSpellLore = key.replace('spell-', '');
-      updateTopCard('slot-spell-lore', `<img src="${img}" alt="Spell Lore" onclick="openPopup('spell-lore')" />`);
+      updateTopCard('slot-spell-lore', img);
     }
     
     input.addEventListener("change", () => {
@@ -636,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       localStorage.setItem(key, "1");
       currentSpellLore = key.replace('spell-', '');
-      updateTopCard('slot-spell-lore', `<img src="${img}" alt="Spell Lore" onclick="openPopup('spell-lore')" />`);
+      updateTopCard('slot-spell-lore', img);
     });
   });
   

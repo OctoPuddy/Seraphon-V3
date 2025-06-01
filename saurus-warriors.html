@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Fiche AOS Interactive</title>
+<style>
+  .toggle {
+    position: absolute;
+    top: calc(var(--top-start) + var(--row) * var(--row-gap));
+    left: var(--left);
+  }
+
+  :root {
+  --top-start: 21%;
+  --row-gap: 4%;
+}
+</style>
+<style>
+    body {
+      margin: 0;
+      background: #333;
+      display: flex;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1200/1667;
+      background-image: url('fiches/saurus-warriors.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center top;
+    }
+
+    .toggle {
+      font-family: 'Roboto', sans-serif;
+      font-weight: bold;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.6em;
+      padding: 0.2vw;
+      border: 2px solid #999;
+      border-radius: 0.4vw;
+      user-select: none;
+      background-color: #D7D0C3;
+      width: 17%;
+      height: 3%;
+      transition: background-color 0.1s ease;
+    }
+
+.notes-container {
+  position: absolute;
+  top: calc(var(--top-start) + 8%);
+  left: 60.5%;
+  width: 35.5%;
+  height: 6%;
+}
+
+.notes-container textarea {
+      width: 100%;
+      height: 100%;
+      resize: none;
+      font-size: 1.6em;
+      text-transform: uppercase;
+      padding: 0.3em;
+      border-radius: 0.4em;
+      border: 1px solid #999;
+      background-color: #ede9d6;
+      font-family: 'Roboto', sans-serif;
+}
+
+
+    #reset-btn {
+      position: absolute;
+      top: 2.2%;
+      right: 3.5%;
+      padding: 0.2em;
+      font-size: 1em;
+      border: none;
+      border-radius: 0.4em;
+      background-color: #ccc;
+      cursor: pointer;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .back-zone {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 20%;
+      height: 20%;
+      z-index: 5;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+<a class="back-zone" href="index.html#rest" onclick="sessionStorage.setItem(\'scrollPos\', window.scrollY);"></a>
+<!-- Boutons -->
+<div class="toggle" data-label="ATTACK" data-type="positive" style="--row: 0; --left: 2%;">+1 ATTACK</div>
+<div class="toggle" data-label="ATTACK" data-type="negative" style="--row: 1; --left: 2%;">-1 ATTACK</div>
+<div class="toggle" data-label="HIT" data-type="positive" style="--row: 0; --left: 21.5%;">+1 HIT</div>
+<div class="toggle" data-label="HIT" data-type="negative" style="--row: 1; --left: 21.5%;">-1 HIT</div>
+<div class="toggle" data-label="WOUND" data-type="positive" style="--row: 0; --left: 41%;">+1 WOUND</div>
+<div class="toggle" data-label="WOUND" data-type="negative" style="--row: 1; --left: 41%;">-1 WOUND</div>
+<div class="toggle" data-label="REND" data-type="positive" style="--row: 0; --left: 60.5%;">+1 REND</div>
+<div class="toggle" data-label="REND" data-type="negative" style="--row: 1; --left: 60.5%;">-1 REND</div>
+<div class="toggle" data-label="CHARGE" data-type="positive" style="--row: 0; --left: 80%;">+1 CHARGE</div>
+<div class="toggle" data-label="CHARGE" data-type="negative" style="--row: 1; --left: 80%;">-1 CHARGE</div>
+<div class="toggle" data-label="SAVE" data-type="positive" style="--row: 2; --left: 2%;">+1 SAVE</div>
+<div class="toggle" data-label="SAVE" data-type="negative" style="--row: 3; --left: 2%;">-1 SAVE</div>
+<div class="toggle" data-label="WARD" data-type="positive" style="--row: 2; --left: 21.5%;">+1 WARD</div>
+<div class="toggle" data-label="WARD" data-type="negative" style="--row: 3; --left: 21.5%;">-1 WARD</div>
+<div class="toggle" data-label="CAST" data-type="positive" style="--row: 2; --left: 41%;">+1 CAST</div>
+<div class="toggle" data-label="CAST" data-type="negative" style="--row: 3; --left: 41%;">-1 CAST</div>
+<!-- Notes -->
+<div class="notes-container">
+<textarea placeholder=""></textarea>
+</div>
+<!-- Reset -->
+<button id="reset-btn">Reset</button>
+</div>
+<script>
+const pastelColors = {
+  neutral: "#D7D0C3",
+  positive1: "#01A66F",
+  positive2: "#01A66F",
+  negative1: "#882023",
+  negative2: "#882023"
+};
+
+const pageName = location.pathname.split("/").pop().replace(".html", "");
+
+function saveData() {
+  const buttonsState = [];
+  document.querySelectorAll(".toggle").forEach(el => {
+    buttonsState.push({
+      label: el.dataset.label,
+      state: el.__state
+    });
+  });
+  localStorage.setItem(`buttonsState-${pageName}`, JSON.stringify(buttonsState));
+
+  const notesText = document.querySelector(".notes-container textarea").value;
+  localStorage.setItem(`notesText-${pageName}`, notesText);
+}
+
+function loadData() {
+  const buttonsState = JSON.parse(localStorage.getItem(`buttonsState-${pageName}`));
+  if (buttonsState) {
+    document.querySelectorAll(".toggle").forEach((el, index) => {
+      const state = buttonsState[index];
+      if (state) {
+        el.__state = state.state;
+        updateButtonState(el);
+      }
+    });
+  } else {
+    document.querySelectorAll(".toggle").forEach(el => {
+      el.__state = 0;
+      updateButtonState(el);
+    });
+  }
+
+  const notesText = localStorage.getItem(`notesText-${pageName}`);
+  if (notesText) {
+    document.querySelector(".notes-container textarea").value = notesText;
+  }
+}
+
+function updateButtonState(el) {
+  const state = el.__state;
+  const label = el.dataset.label;
+  const type = el.dataset.type;
+
+  if (state === 0) {
+    el.style.backgroundColor = pastelColors.neutral;
+    el.style.color = "#000";
+    el.textContent = `${type === "positive" ? "+1" : "-1"} ${label}`;
+  } else if (state === 1) {
+    el.style.backgroundColor = pastelColors[type + "1"];
+    el.style.color = type === "negative" ? "#fff" : "#000";
+    el.textContent = `${type === "positive" ? "+1" : "-1"} ${label}`;
+  } else {
+    el.style.backgroundColor = pastelColors[type + "2"];
+    el.style.color = type === "negative" ? "#fff" : "#000";
+    el.textContent = `${type === "positive" ? "+2" : "-2"} ${label}`;
+  }
+}
+
+window.onload = function() {
+  loadData();
+
+  document.querySelectorAll(".toggle").forEach(el => {
+    el.__state = 0;
+    el.addEventListener("click", () => {
+      el.__state = (el.__state + 1) % 3;
+      updateButtonState(el);
+      saveData();
+    });
+  });
+
+  const notes = document.querySelector(".notes-container textarea");
+  if (notes) {
+    notes.addEventListener("input", saveData);
+  }
+
+  const resetBtn = document.getElementById("reset-btn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      document.querySelectorAll(".toggle").forEach(el => {
+        el.__state = 0;
+        updateButtonState(el);
+      });
+
+      const textarea = document.querySelector(".notes-container textarea");
+      if (textarea) textarea.value = "";
+
+      localStorage.removeItem(`buttonsState-${pageName}`);
+      localStorage.removeItem(`notesText-${pageName}`);
+    });
+  }
+};
+</script>
+
+</body>
+</html>

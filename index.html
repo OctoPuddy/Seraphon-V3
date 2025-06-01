@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Index AOS</title>
+<meta content="width=device-width, initial-scale=1.0, user-scalable=yes" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+   html, body {
+     margin: 0;
+     padding: 0;
+     background-color: #222;
+     font-family: sans-serif;
+     overflow-x: hidden;
+     overflow-y: auto;
+     width: 100%;
+     max-width: 1200px;
+     margin: 0 auto;
+     min-height: 100vh;
+     height: auto;
+   }
+   header {
+     height: 60px;
+     background-color: #222;
+     padding: 0 1%;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+   }
+   .header-left,
+   .header-right {
+     display: flex;
+     align-items: center;
+     gap: 0.5em;
+   }
+   button {
+     padding: 0.8em 0.8em;
+     background-color: #ccc;
+     border: none;
+     border-radius: 0.4em;
+     font-weight: bold;
+     cursor: pointer;
+     font-size: 0.9em;
+     white-space: nowrap;
+   }
+   button:hover {
+     background-color: #eee;
+   }
+   .drag-toggle.active {
+     background-color: #88c;
+     color: white;
+   }
+   /* Style pour le bouton Composition actif */
+   .composition-toggle.active {
+     background-color: #8c8;
+     color: white;
+   }
+   /* Style pour le bouton Badges actif */
+   .badge-toggle.active {
+     background-color: #c88;
+     color: white;
+   }
+   .dropdown-panel {
+     position: absolute;
+     top: 100%;
+     left: 0;
+     background-color: #333;
+     color: white;
+     border: 1px solid #555;
+     padding: 1em;
+     border-radius: 0.4em;
+     display: none;
+     flex-direction: column;
+     gap: 0.5em;
+     max-height: 300px;
+     overflow-y: auto;
+     z-index: 1001;
+     white-space: nowrap;
+     min-width: max-content;
+   }
+   .dropdown-panel label {
+     display: flex;
+     align-items: center;
+     font-size: 0.9em;
+   }
+   .dropdown-panel input {
+     margin-right: 0.5em;
+   }
+   .section-top {
+     display: grid;
+     grid-template-columns: repeat(3, 1fr);
+     gap: 1.5%;
+     padding: 1.5%;
+   }
+   .top-card-slot {
+     width: 100%;
+     overflow: hidden;
+     display: flex;
+     justify-content: center;
+     position: relative;
+   }
+   .top-card-slot img {
+     width: 100%;
+     height: auto;
+     object-fit: contain;
+     display: block;
+     cursor: pointer;
+   }
+   .separator {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     height: 2vh;
+     font-family: 'Roboto', sans-serif;
+     font-size: 1.2em;
+     color: #ccc;
+     border-top: 1px solid #444;
+     border-bottom: 1px solid #444;
+     background-color: #222;
+     margin: 0;
+   }
+   .section-rest {
+     display: grid;
+     grid-template-columns: repeat(4, 1fr);
+     gap: 1.5%;
+     padding: 1.5%;
+   }
+   .image-button {
+     width: 100%;
+     aspect-ratio: 1200 / 1667;
+     overflow: hidden;
+     transition: transform 0.2s ease;
+     touch-action: auto;
+     position: relative;
+   }
+   .image-button:hover {
+     transform: scale(1.03);
+   }
+   .image-button img {
+     width: 100%;
+     height: 100%;
+     object-fit: contain;
+     display: block;
+     border-radius: 0.6em;
+   }
+   
+   /* Style pour le nom des unités en mode composition */
+   .unit-name {
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     color: white;
+     background-color: rgba(0, 0, 0, 0.7);
+     padding: 4px 8px;
+     border-radius: 4px;
+     font-size: 2em;
+     font-weight: bold;
+     text-align: center;
+     white-space: normal;
+     word-wrap: break-word;
+     max-width: 90%;
+     line-height: 1.2;
+     opacity: 0;
+     transition: opacity 0.2s ease;
+     pointer-events: none;
+     z-index: 10;
+   }
+   
+   /* Afficher le nom en mode composition */
+   body.composition-mode .unit-name {
+     opacity: 1;
+   }
+   
+/* Style pour les badges sur les vignettes */
+.unit-badge {
+ position: absolute;
+ bottom: 5px;
+ right: 5px;
+ width: 40%;
+ height: 40%;
+ max-width: 120px;  /* Limite la taille max pour les grandes vignettes */
+ max-height: 120px;
+ object-fit: contain;
+ z-index: 5;
+ pointer-events: none;
+}
+
+/* Style pour les badges sur les vignettes du haut */
+/* Style pour les badges sur les vignettes du haut */
+.top-card-slot .unit-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 20%;
+  height: 20%;
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: contain;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.5;
+}
+   
+   #popup-overlay {
+     display: none;
+     justify-content: center;
+     align-items: center;
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100vw;
+     height: 100vh;
+     background: rgba(0, 0, 0, 0.7);
+     z-index: 1000;
+   }
+   .popup-content {
+     background: #222;
+     padding: 20px;
+     display: grid;
+     grid-template-columns: repeat(2, 1fr);
+     gap: 20px;
+     border-radius: 0.5em;
+   }
+   .popup-content img {
+     width: 30vw;
+     max-width: 100%;
+     height: auto;
+     cursor: pointer;
+   }
+   /* Classes pour le mode composition */
+   .inactive-card {
+     opacity: 0.3;
+     filter: grayscale(100%);
+   }
+   .hidden-card {
+     display: none !important;
+   }
+   /* Style pour le popup des spells avec 3 colonnes */
+   #popup-spells {
+     grid-template-columns: repeat(3, 1fr) !important;
+   }
+   /* Style pour le popup des badges */
+   #popup-badges {
+     grid-template-columns: repeat(2, 1fr) !important;
+     gap: 15px !important;
+   }
+   #popup-badges img {
+     width: 180px !important;
+     height: 180px !important;
+   }
+ </style>
+</head>
+<body>
+<header>
+<div class="header-left">
+<div style="position: relative;">
+<button id="compositionToggle" class="composition-toggle">Composition</button>
+<div class="dropdown-panel" id="filterDropdown"></div>
+</div>
+<button id="badgeToggle" class="badge-toggle">Tokens</button>
+<div style="position: relative;">
+<button onclick="toggleDropdown('spellDropdown')">Spell Lore</button>
+<div class="dropdown-panel" id="spellDropdown">
+<label><input data-img="icons/celestial.png" data-key="spell-Celestial" name="spell" type="radio"/>Celestial Manipulation</label>
+<label><input data-img="icons/primal-jungles.png" data-key="spell-Primal" name="spell" type="radio"/>Primal Jungles</label>
+</div>
+</div>
+</div>
+<div class="header-right">
+<button class="drag-toggle" id="dragToggleBtn" onclick="toggleDrag()">Déverrouiller</button>
+<button class="reset-all" onclick="resetAllData()">Reset Data</button>
+</div>
+</header>
+<div class="section-top">
+<div class="top-card-slot" id="battle-slot-T1">
+<img alt="Battle Trait T1" onclick="openPopup('T1')" src="icons/battle-trait-T1.png"/>
+</div>
+<div class="top-card-slot" id="battle-slot-T3">
+<img alt="Battle Trait T3" onclick="openPopup('T3')" src="icons/battle-trait-T3.png"/>
+</div>
+<div class="top-card-slot">
+<img alt="Command Orders" onclick="location.href='commands.html'" src="icons/command-orders.png"/>
+</div>
+<div class="top-card-slot" id="slot-battle">
+<img alt="Battle Formation" onclick="openPopup('battle')" src="icons/eternalstar.png"/>
+</div>
+<div class="top-card-slot" id="slot-artefact">
+<img alt="Artefact" onclick="openPopup('artefact')" src="icons/artefact.png"/>
+<img class="unit-badge" src="icons/badge3.png" alt="Token Artefact">
+</div>
+<div class="top-card-slot" id="slot-trait">
+<img alt="Trait" onclick="openPopup('trait')" src="icons/trait.png"/>
+<img class="unit-badge" src="icons/badge2.png" alt="Token Trait">
+</div>
+<div class="top-card-slot" id="slot-spell-lore"></div>
+<div class="top-card-slot" id="slot-monstruous">
+<img alt="Monstruous" onclick="openPopup('monstruous')" src="icons/monstruous.png"/>
+<img class="unit-badge" src="icons/badge4.png" alt="Token Monstruous">
+</div>
+<div class="top-card-slot" id="slot-map">
+<img alt="Map" onclick="location.href='https://wahapedia.ru/aos4/the-rules/general-s-handbook-2024-25/#Border-War'" src="icons/map.png"/>
+</div>
+</div>
+<div class="separator">Armée</div>
+<div class="section-rest" id="cardContainer"></div>
+<div id="popup-overlay">
+<div class="popup-content" style="background: #222; padding: 20px; display: flex; flex-direction: column; gap: 20px; border-radius: 0.5em;">
+<div id="popup-t1t3" style="display:none; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+<img onclick="selectTrait('1')" src="icons/battle-trait-1.png"/>
+<img onclick="selectTrait('2')" src="icons/battle-trait-2.png"/>
+<img onclick="selectTrait('3')" src="icons/battle-trait-3.png"/>
+<img onclick="selectTrait('4')" src="icons/battle-trait-4.png"/>
+</div>
+<div id="popup-battle" style="display:none; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+<img onclick="selectGeneric('battle', 'eternalstar')" src="icons/eternalstar.png"/>
+<img onclick="selectGeneric('battle', 'shadowstrike')" src="icons/shadowstrike.png"/>
+<img onclick="selectGeneric('battle', 'sunclaw')" src="icons/sunclaw.png"/>
+<img onclick="selectGeneric('battle', 'thunderquake')" src="icons/thunderquake.png"/>
+</div>
+<div id="popup-artefact" style="display:none; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+<img onclick="selectArtefact('reset')" src="icons/artefact.png"/>
+<img onclick="selectArtefact('1')" src="icons/artefact1.png"/>
+<img onclick="selectArtefact('2')" src="icons/artefact2.png"/>
+<img onclick="selectArtefact('3')" src="icons/artefact3.png"/>
+</div>
+<div id="popup-trait" style="display:none; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+<img onclick="selectTrait2('reset')" src="icons/trait.png" style="grid-column: 1 / -1; width: 33%; margin: 0 auto 20px auto;"/>
+<img onclick="selectTrait2('trait-hero1')" src="icons/trait-hero1.png"/>
+<img onclick="selectTrait2('trait-hero2')" src="icons/trait-hero2.png"/>
+<img onclick="selectTrait2('trait-hero3')" src="icons/trait-hero3.png"/>
+<img onclick="selectTrait2('trait-hero4')" src="icons/trait-hero4.png"/>
+<img onclick="selectTrait2('trait-hero5')" src="icons/trait-hero5.png"/>
+<img onclick="selectTrait2('trait-hero6')" src="icons/trait-hero6.png"/>
+</div>
+<div id="popup-spells" style="display:none; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+<!-- Contenu dynamique des spells -->
+</div>
+<div id="popup-monstruous" style="display:none; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+<img onclick="selectMonstruous('reset')" src="icons/monstruous.png" style="grid-column: 1 / -1; width: 33%; margin: 0 auto 20px auto;"/>
+<img onclick="selectMonstruous('1')" src="icons/monstruous1.png"/>
+<img onclick="selectMonstruous('2')" src="icons/monstruous2.png"/>
+<img onclick="selectMonstruous('3')" src="icons/monstruous3.png"/>
+</div>
+<div id="popup-badges" style="display:none; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+<img onclick="selectBadge('1')" src="icons/badge1.png"/>
+<img onclick="selectBadge('2')" src="icons/badge2.png"/>
+<img onclick="selectBadge('3')" src="icons/badge3.png"/>
+<img onclick="selectBadge('4')" src="icons/badge4.png"/>
+</div>
+</div>
+</div>
+<script>
+let currentTraitTarget = null;
+let sortableInstance = null;
+let compositionMode = false;
+let badgeMode = false;
+let currentBadgeTarget = null;
+let currentSpellLore = null;
+
+window.addEventListener("beforeunload", () => {
+ sessionStorage.setItem("scrollPos", window.scrollY);
+});
+
+function openPopup(target) {
+ currentTraitTarget = target;
+ document.getElementById('popup-overlay').style.display = 'flex';
+ ['popup-t1t3', 'popup-battle', 'popup-artefact', 'popup-trait', 'popup-spells', 'popup-monstruous', 'popup-badges'].forEach(id => {
+   document.getElementById(id).style.display = 'none';
+ });
+ 
+ if (target === 'T1' || target === 'T3') {
+   document.getElementById('popup-t1t3').style.display = 'grid';
+ } else if (target === 'spell-lore') {
+   // Afficher les spells du lore actuellement sélectionné
+   const spellsDiv = document.getElementById('popup-spells');
+   spellsDiv.innerHTML = '';
+   
+   if (currentSpellLore === 'Celestial') {
+     spellsDiv.innerHTML = `
+       <img src="icons/celestial1.png" alt="Celestial Spell 1" />
+       <img src="icons/celestial2.png" alt="Celestial Spell 2" />
+       <img src="icons/celestial3.png" alt="Celestial Spell 3" />
+     `;
+   } else if (currentSpellLore === 'Primal') {
+     spellsDiv.innerHTML = `
+       <img src="icons/primal1.png" alt="Primal Spell 1" />
+       <img src="icons/primal2.png" alt="Primal Spell 2" />
+       <img src="icons/primal3.png" alt="Primal Spell 3" />
+     `;
+   }
+   
+   spellsDiv.style.display = 'grid';
+ } else if (target === 'badge') {
+   document.getElementById('popup-badges').style.display = 'grid';
+ } else {
+   const popupId = 'popup-' + target;
+   if (document.getElementById(popupId)) {
+     document.getElementById(popupId).style.display = 'grid';
+   }
+ }
+}
+
+function selectTrait(number) {
+ if (currentTraitTarget) {
+   const slot = document.getElementById(`battle-slot-${currentTraitTarget}`);
+   slot.innerHTML = `<img src="icons/battle-trait-${number}.png" alt="Battle Trait" onclick="openPopup('${currentTraitTarget}')" />`;
+   localStorage.setItem(`trait-${currentTraitTarget}`, number);
+   document.getElementById('popup-overlay').style.display = 'none';
+ }
+}
+
+function selectArtefact(selection) {
+ const slot = document.getElementById('slot-artefact');
+ const mainImg = slot.querySelector('img:not(.unit-badge)');
+ if (selection === 'reset') {
+   mainImg.src = 'icons/artefact.png';
+   localStorage.removeItem('artefact-selection');
+ } else {
+   mainImg.src = `icons/artefact${selection}.png`;
+   localStorage.setItem('artefact-selection', selection);
+ }
+ document.getElementById('popup-overlay').style.display = 'none';
+}
+
+function selectTrait2(selection) {
+ const slot = document.getElementById('slot-trait');
+ const mainImg = slot.querySelector('img:not(.unit-badge)');
+ if (selection === 'reset') {
+   mainImg.src = 'icons/trait.png';
+   localStorage.removeItem('trait-selection');
+ } else {
+   mainImg.src = `icons/${selection}.png`;
+   localStorage.setItem('trait-selection', selection);
+ }
+ document.getElementById('popup-overlay').style.display = 'none';
+}
+
+function selectMonstruous(number) {
+ const slot = document.getElementById('slot-monstruous');
+ const mainImg = slot.querySelector('img:not(.unit-badge)');
+ if (number === 'reset') {
+   mainImg.src = 'icons/monstruous.png';
+   localStorage.removeItem('monstruous-selection');
+ } else {
+   mainImg.src = `icons/monstruous${number}.png`;
+   localStorage.setItem('monstruous-selection', number);
+ }
+ document.getElementById('popup-overlay').style.display = 'none';
+}
+
+function selectBadge(number) {
+ if (currentBadgeTarget) {
+   const existingBadge = currentBadgeTarget.querySelector('.unit-badge');
+   if (existingBadge) {
+     existingBadge.remove();
+   }
+   
+   const badge = document.createElement('img');
+   badge.className = 'unit-badge';
+   badge.src = `icons/badge${number}.png`;
+   currentBadgeTarget.appendChild(badge);
+   
+   // Sauvegarder le badge choisi
+   localStorage.setItem(`badge-${currentBadgeTarget.dataset.id}`, number);
+ }
+ document.getElementById('popup-overlay').style.display = 'none';
+}
+
+function toggleDropdown(id) {
+ document.querySelectorAll('.dropdown-panel').forEach(drop => {
+   drop.style.display = (drop.id === id && drop.style.display !== 'flex') ? 'flex' : 'none';
+ });
+}
+
+function updateTopCard(slotId, imgPath) {
+ const slot = document.getElementById(slotId);
+ if (slotId === 'slot-spell-lore') {
+   slot.innerHTML = imgPath ? `<img src="${imgPath}" alt="Spell Lore" onclick="openPopup('spell-lore')" />` : '';
+ } else {
+   slot.innerHTML = imgPath ? `<img src="${imgPath}" alt="">` : '';
+ }
+}
+
+function toggleDrag() {
+ if (compositionMode || badgeMode) return; // Ne pas activer le drag en mode composition ou badge
+ 
+ const container = document.getElementById('cardContainer');
+ const button = document.getElementById('dragToggleBtn');
+
+ if (sortableInstance) {
+   sortableInstance.destroy();
+   sortableInstance = null;
+   button.textContent = "Déverrouiller";
+   button.classList.remove("active");
+ } else {
+   sortableInstance = new Sortable(container, {
+     animation: 150,
+     onEnd: saveCardOrder
+   });
+   button.textContent = "Verrouiller";
+   button.classList.add("active");
+ }
+}
+
+function saveCardOrder() {
+ const order = Array.from(document.querySelectorAll('#cardContainer .image-button:not(.hidden-card)')).map(card => card.dataset.id);
+ localStorage.setItem("cardOrder", JSON.stringify(order));
+}
+
+function loadCardOrder() {
+ const order = JSON.parse(localStorage.getItem("cardOrder") || "[]");
+ const map = {};
+ document.querySelectorAll('#cardContainer .image-button').forEach(card => {
+   map[card.dataset.id] = card;
+ });
+ order.forEach(id => {
+   if (map[id]) document.getElementById('cardContainer').appendChild(map[id]);
+ });
+}
+
+function toggleCompositionMode() {
+ compositionMode = !compositionMode;
+ const button = document.getElementById('compositionToggle');
+ 
+ // Si mode composition activé, désactiver Sortable et Badge mode
+ if (compositionMode) {
+   button.classList.add("active");
+   document.body.classList.add("composition-mode");
+   
+   // Désactiver le mode badge s'il est actif
+   if (badgeMode) {
+     toggleBadgeMode();
+   }
+   
+   if (sortableInstance) {
+     sortableInstance.destroy();
+     sortableInstance = null;
+     document.getElementById('dragToggleBtn').textContent = "Déverrouiller";
+     document.getElementById('dragToggleBtn').classList.remove("active");
+   }
+   
+   // Afficher toutes les cartes et appliquer inactive-card à celles masquées
+   document.querySelectorAll('.image-button').forEach(card => {
+     const id = card.dataset.id;
+     const visible = localStorage.getItem("visible-" + id);
+     card.classList.remove("hidden-card");
+     card.classList.toggle("inactive-card", visible === "0");
+   });
+ } else {
+   button.classList.remove("active");
+   document.body.classList.remove("composition-mode");
+   // Masquer les cartes désactivées
+   document.querySelectorAll('.image-button').forEach(card => {
+     const id = card.dataset.id;
+     const visible = localStorage.getItem("visible-" + id);
+     card.classList.remove("inactive-card");
+     if (visible === "0") card.classList.add("hidden-card");
+   });
+ }
+}
+
+function toggleBadgeMode() {
+ badgeMode = !badgeMode;
+ const button = document.getElementById('badgeToggle');
+ 
+ if (badgeMode) {
+   button.classList.add("active");
+   // Désactiver le mode composition s'il est actif
+   if (compositionMode) {
+     toggleCompositionMode();
+   }
+   // Désactiver le drag s'il est actif
+   if (sortableInstance) {
+     sortableInstance.destroy();
+     sortableInstance = null;
+     document.getElementById('dragToggleBtn').textContent = "Déverrouiller";
+     document.getElementById('dragToggleBtn').classList.remove("active");
+   }
+ } else {
+   button.classList.remove("active");
+ }
+}
+
+function selectGeneric(type, imageKey) {
+ const slotMap = {
+   'battle': 'slot-battle'
+ };
+ const slot = document.getElementById(slotMap[type]);
+ if (slot) {
+   slot.innerHTML = `<img src="icons/${imageKey}.png" alt="${type}" onclick="openPopup('${type}')" />`;
+   localStorage.setItem(`${type}-selection`, imageKey);
+   document.getElementById('popup-overlay').style.display = 'none';
+ }
+}
+
+function resetAllData() {
+ const keysToRemove = [];
+
+ for (let i = 0; i < localStorage.length; i++) {
+   const key = localStorage.key(i);
+
+   // Ne pas toucher aux sélections de battle, artefact, trait, spell-lore et monstruous
+   const isProtected =
+     key === "battle-selection" ||
+     key === "artefact-selection" ||
+     key === "trait-selection" ||
+     key === "spell-Celestial" ||
+     key === "spell-Primal" ||
+     key === "monstruous-selection" ||
+     key === "battle-eternalstar" ||
+     key === "battle-shadowstrike" ||
+     key === "battle-sunclaw" ||
+     key === "battle-thunderquake" ||
+     key === "artefact-artefact1" ||
+     key === "artefact-artefact2" ||
+     key === "artefact-artefact3" ||
+     key === "trait-beastmaster" ||
+     key === "trait-beingofthestars" ||
+     key === "trait-reptiliancunning";
+
+   if (
+     (key.startsWith("trait-T1") ||
+      key.startsWith("trait-T3") ||
+      key.startsWith("buttonsState-") ||
+      key.startsWith("notesText-")) &&
+      !isProtected
+   ) {
+     keysToRemove.push(key);
+   }
+ }
+
+ keysToRemove.forEach(key => localStorage.removeItem(key));
+ location.reload();
+}
+
+// Définition de la liste des unités
+const unitList = [
+ { id: "Slann", name: "Slann Starmaster", img: "slann.png", page: "slann.html" },
+ { id: "Oldblood carno", name: "Oldblood on Carnosaur", img: "oldblood-carno.png", page: "oldblood-carno.html" },
+ { id: "Troglodon", name: "Skink Oracle on Troglodon", img: "troglodon.png", page: "troglodon.html" },
+ { id: "Starpriest", name: "Skink Starpriest", img: "starpriest.png", page: "starpriest.html" },
+
+ { id: "Aggradon", name: "Aggradon Lancers", img: "aggradon-lancers.png", page: "aggradon-lancers.html" },
+ { id: "Chargers", name: "Raptadon Chargers", img: "raptadon-chargers.png", page: "raptadon-chargers.html" },
+ { id: "Hunters", name: "Raptadon Hunters", img: "raptadon-hunters.png", page: "raptadon-hunters.html" },
+
+ { id: "Saurus", name: "Saurus Warriors", img: "saurus-warriors.png", page: "saurus-warriors.html" },
+ { id: "Saurus Guard", name: "Saurus Guard", img: "saurus-guard.png", page: "saurus-guard.html" },
+ { id: "Kroxigor", name: "Kroxigor", img: "kroxigor.png", page: "kroxigor.html" },
+ { id: "Kroxigor Warspawned", name: "Kroxigor Warspawned", img: "kroxigor-warspawned.png", page: "kroxigor-warspawned.html" },
+
+ { id: "Skinks", name: "Skinks", img: "skinks.png", page: "skinks.html" },
+ { id: "Huanchi Bolas", name: "Hunters of Huanchi (Bolas)", img: "huanchi-bolas.png", page: "huanchi-bolas.html" },
+ { id: "Huanchi Dartpipe", name: "Hunters of Huanchi (Dartpipe)", img: "huanchi-dartpipe.png", page: "huanchi-dartpipe.html" },
+
+ { id: "bastiladon-solar", name: "Bastiladon with Solar Engine", img: "bastiladon-solar.png", page: "bastiladon-solar.html" },
+ { id: "bastiladon-sotek", name: "Bastiladon with Ark of Sotek", img: "bastiladon-sotek.png", page: "bastiladon-sotek.html" },
+ { id: "stegadon", name: "Stegadon", img: "stegadon.png", page: "stegadon.html" },
+ { id: "stegadon-chief", name: "Stegadon Chief", img: "stegadon-chief.png", page: "stegadon-chief.html" },
+ { id: "engineofgods", name: "Engine of the Gods", img: "engineofgods.png", page: "engineofgods.html" },
+
+ { id: "terradon", name: "Terradon Riders", img: "terradon.png", page: "terradon.html" },
+ { id: "ripperdactyl", name: "Ripperdactyl Riders", img: "ripperdactyl.png", page: "ripperdactyl.html" },
+
+ { id: "Krondspine", name: "Krondspine", img: "krondspine.png", page: "krondspine.html" },
+ { id: "Realmshaper", name: "Realmshaper", img: "realmshaper.png", page: "realmshaper.html" }
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+ // Initialisation du bouton Composition
+ const compBtn = document.getElementById("compositionToggle");
+ if (compBtn) {
+   compBtn.addEventListener("click", toggleCompositionMode);
+ }
+ 
+ // Initialisation du bouton Badge
+ const badgeBtn = document.getElementById("badgeToggle");
+ if (badgeBtn) {
+   badgeBtn.addEventListener("click", toggleBadgeMode);
+ }
+
+ // Restauration des sélections pour battle seulement (artefact et trait ont maintenant leur propre logique)
+const battleSelected = localStorage.getItem("battle-selection");
+ if (battleSelected) {
+   const slot = document.getElementById("slot-battle");
+   if (slot) {
+     slot.innerHTML = `<img src="icons/${battleSelected}.png" alt="battle" onclick="openPopup('battle')" />`;
+   }
+ }
+ 
+ // Restauration de la sélection artefact
+ const artefactSelection = localStorage.getItem('artefact-selection');
+ if (artefactSelection) {
+   const slot = document.getElementById('slot-artefact');
+   const mainImg = slot.querySelector('img:not(.unit-badge)');
+   mainImg.src = `icons/artefact${artefactSelection}.png`;
+ }
+ 
+ // Restauration de la sélection trait
+ const traitSelection = localStorage.getItem('trait-selection');
+ if (traitSelection) {
+   const slot = document.getElementById('slot-trait');
+   const mainImg = slot.querySelector('img:not(.unit-badge)');
+   mainImg.src = `icons/${traitSelection}.png`;
+ }
+ 
+ // Restauration de la sélection monstruous
+ const monstruousSelection = localStorage.getItem('monstruous-selection');
+ if (monstruousSelection) {
+   const slot = document.getElementById('slot-monstruous');
+   const mainImg = slot.querySelector('img:not(.unit-badge)');
+   mainImg.src = `icons/monstruous${monstruousSelection}.png`;
+ }
+ 
+ // Création du conteneur de cartes
+ const container = document.getElementById("cardContainer");
+ 
+ // Créer les cartes unités
+ unitList.forEach(unit => {
+   // Crée la vignette
+   const a = document.createElement("a");
+   a.href = unit.page;
+   a.className = "image-button";
+   a.dataset.id = unit.id;
+   
+   // Créer l'élément pour le nom de l'unité
+   const nameDiv = document.createElement("div");
+   nameDiv.className = "unit-name";
+   nameDiv.textContent = unit.name;
+   
+   a.innerHTML = `<img src="boutons/${unit.img}" alt="${unit.name}">`;
+     a.appendChild(nameDiv);
+   
+   // Vérifier et initialiser la visibilité
+   const visible = localStorage.getItem("visible-" + unit.id);
+   if (visible === null) localStorage.setItem("visible-" + unit.id, "1");
+   if (visible === "0") a.classList.add("hidden-card");
+   
+   // Ajouter l'événement de clic pour le mode composition et badge
+   a.addEventListener("click", e => {
+     if (compositionMode) {
+       e.preventDefault();
+       const isInactive = a.classList.toggle("inactive-card");
+       localStorage.setItem("visible-" + unit.id, isInactive ? "0" : "1");
+     } else if (badgeMode) {
+       e.preventDefault();
+       currentBadgeTarget = a;
+       openPopup('badge');
+     }
+   });
+   
+   container.appendChild(a);
+   
+   // Créer également l'entrée dans le filterDropdown pour la compatibilité
+   const label = document.createElement("label");
+   const checkbox = document.createElement("input");
+   checkbox.type = "checkbox";
+   checkbox.dataset.id = unit.id;
+   checkbox.checked = visible !== "0";
+   label.appendChild(checkbox);
+   label.appendChild(document.createTextNode(" " + unit.name));
+   document.getElementById("filterDropdown").appendChild(label);
+   
+   // Gestionnaire pour les checkboxes du dropdown (maintenu pour compatibilité)
+   checkbox.addEventListener("change", () => {
+     const card = document.querySelector(`.image-button[data-id="${unit.id}"]`);
+     if (!card) return;
+     
+     const isChecked = checkbox.checked;
+     localStorage.setItem("visible-" + unit.id, isChecked ? "1" : "0");
+     
+     if (!compositionMode) {
+       card.style.display = isChecked ? "block" : "none";
+       card.classList.toggle("hidden-card", !isChecked);
+     } else {
+       card.classList.toggle("inactive-card", !isChecked);
+     }
+   });
+ });
+ 
+ // Restaurer les badges sauvegardés
+ unitList.forEach(unit => {
+   const badgeNumber = localStorage.getItem(`badge-${unit.id}`);
+   if (badgeNumber) {
+     const card = document.querySelector(`.image-button[data-id="${unit.id}"]`);
+     if (card) {
+       const badge = document.createElement('img');
+       badge.className = 'unit-badge';
+       badge.src = `icons/badge${badgeNumber}.png`;
+       card.appendChild(badge);
+     }
+   }
+ });
+ 
+ // Repositionne le scroll
+ const savedPos = sessionStorage.getItem("scrollPos");
+ if (savedPos) window.scrollTo(0, parseInt(savedPos));
+ 
+ // Restaure les traits de bataille
+ ['T1', 'T3'].forEach(id => {
+   const saved = localStorage.getItem(`trait-${id}`);
+   if (saved) {
+     const slot = document.getElementById(`battle-slot-${id}`);
+     slot.innerHTML = `<img src="icons/battle-trait-${saved}.png" alt="Battle Trait" onclick="openPopup('${id}')" />`;
+   }
+ });
+ 
+ // Configuration des sélections de sorts
+ document.querySelectorAll('#spellDropdown input[type="radio"]').forEach(input => {
+   const key = input.dataset.key;
+   const img = input.dataset.img;
+   
+   if (localStorage.getItem(key) === "1") {
+     input.checked = true;
+     currentSpellLore = key.replace('spell-', '');
+     updateTopCard('slot-spell-lore', img);
+   }
+   
+   input.addEventListener("change", () => {
+     document.querySelectorAll('#spellDropdown input[type="radio"]').forEach(i => {
+       localStorage.setItem(i.dataset.key, "0");
+     });
+     localStorage.setItem(key, "1");
+     currentSpellLore = key.replace('spell-', '');
+     updateTopCard('slot-spell-lore', img);
+   });
+ });
+ 
+ // Si aucun spell lore sélectionné, sélectionner le premier par défaut
+ const spellInputs = document.querySelectorAll('#spellDropdown input[type="radio"]');
+ const anySpellChecked = Array.from(spellInputs).some(input => input.checked);
+ if (!anySpellChecked && spellInputs.length > 0) {
+   spellInputs[0].checked = true;
+   spellInputs[0].dispatchEvent(new Event('change'));
+ }
+ 
+ loadCardOrder();
+});
+
+document.addEventListener('click', (e) => {
+ // Fermer les dropdowns en cliquant ailleurs
+ if (!e.target.closest('.dropdown-panel') && !e.target.matches('button')) {
+   document.querySelectorAll('.dropdown-panel').forEach(drop => drop.style.display = 'none');
+ }
+ 
+ // Fermer le popup en cliquant en dehors
+ if (e.target.id === 'popup-overlay') {
+   // Retirer le badge si on clique hors du popup en mode badge
+   if (currentBadgeTarget) {
+     const existingBadge = currentBadgeTarget.querySelector('.unit-badge');
+     if (existingBadge) {
+       existingBadge.remove();
+       localStorage.removeItem(`badge-${currentBadgeTarget.dataset.id}`);
+     }
+     currentBadgeTarget = null;
+   }
+   e.target.style.display = 'none';
+ }
+});
+
+if (sessionStorage.getItem('returnToRest')) {
+ const target = document.querySelector('.section-rest .image-button');
+ if (target) {
+   target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+   sessionStorage.removeItem('returnToRest');
+ }
+}
+</script>
+</body>
+</html>

@@ -714,7 +714,19 @@ const battleSelected = localStorage.getItem("battle-selection");
    const mainImg = slot.querySelector('img:not(.unit-badge)');
    mainImg.src = `icons/monstruous${monstruousSelection}.png`;
  }
- 
+ // Restaurer artefact par défaut si aucune sélection
+if (!artefactSelection) {
+  const slot = document.getElementById('slot-artefact');
+  const mainImg = slot.querySelector('img:not(.unit-badge)');
+  mainImg.src = 'icons/artefact.png';
+}
+
+// Restaurer trait par défaut si aucune sélection  
+if (!traitSelection) {
+  const slot = document.getElementById('slot-trait');
+  const mainImg = slot.querySelector('img:not(.unit-badge)');
+  mainImg.src = 'icons/trait.png';
+}
  // Création du conteneur de cartes
  const container = document.getElementById("cardContainer");
  
